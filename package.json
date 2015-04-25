@@ -1,0 +1,43 @@
+{
+  "name": "lunar",
+  "version": "0.0.3",
+  "description": "Chinese lunar calendar converter",
+  "author": "Lin Lou <lin.lou@hotmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "lunar",
+    "solar",
+    "calendar",
+    "农历",
+    "阴历",
+    "公历",
+    "阳历",
+    "万年历"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha ./test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loulin/lunar"
+  },
+  "bugs": {
+    "url": "https://github.com/loulin/lunar/issues"
+  },
+  "devDependencies": {
+    "babel": "^5.1.10",
+    "chai": "^2.2.0",
+    "del": "^1.1.1",
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
+    "gulp-jscs": "^1.5.2",
+    "gulp-mocha": "^2.0.1",
+    "gulp-sourcemaps": "^1.5.2",
+    "mocha": "^2.2.4",
+    "mocha-jshint": "^2.1.1"
+  },
+  "dependencies": {
+    "lodash": "^3.7.0"
+  }
+}
