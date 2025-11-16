@@ -1,9 +1,10 @@
 {
   "name": "lunar",
-  "version": "0.0.3",
-  "description": "Chinese lunar calendar converter",
+  "version": "2.0.0-dev.0",
+  "description": "高性能公农历互转工具库",
   "author": "Lin Lou <lin.lou@hotmail.com>",
   "license": "MIT",
+  "type": "module",
   "keywords": [
     "lunar",
     "solar",
@@ -14,9 +15,27 @@
     "阳历",
     "万年历"
   ],
-  "main": "index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "mocha ./test"
+    "clean": "rimraf dist",
+    "build": "tsup",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "check": "npm run lint && npm run test"
   },
   "repository": {
     "type": "git",
@@ -25,19 +44,18 @@
   "bugs": {
     "url": "https://github.com/loulin/lunar/issues"
   },
+  "dependencies": {},
   "devDependencies": {
-    "babel": "^5.1.10",
-    "chai": "^2.2.0",
-    "del": "^1.1.1",
-    "gulp": "^3.8.11",
-    "gulp-babel": "^5.1.0",
-    "gulp-jscs": "^1.5.2",
-    "gulp-mocha": "^2.0.1",
-    "gulp-sourcemaps": "^1.5.2",
-    "mocha": "^2.2.4",
-    "mocha-jshint": "^2.1.1"
+    "@eslint/js": "^9.11.1",
+    "@types/node": "^22.5.0",
+    "eslint": "^9.11.1",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.1.0",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.1",
+    "vitest": "^2.1.1"
   },
-  "dependencies": {
-    "lodash": "^3.7.0"
+  "engines": {
+    "node": ">=16.20.0"
   }
 }
