@@ -75,3 +75,38 @@ export interface ToGregorianResult {
   /** 与转换相关的上下文信息 */
   metadata: ConversionMetadata;
 }
+
+/** 控制 formatLunar 输出的风格 */
+export type FormatLunarStyle = 'long' | 'short';
+
+/** formatLunar 的配置选项 */
+export interface FormatLunarOptions {
+  /** 控制“农历”前缀，可传入字符串或 false（禁用前缀） */
+  prefix?: boolean | string;
+  /** 是否输出天干地支。true/'year' 仅输出年份，'all' 预留后续扩展 */
+  stemBranch?: boolean | 'year' | 'all';
+  /** 是否附带生肖（默认 false）。输出格式为 “（龙）” */
+  zodiac?: boolean;
+  /** 闰月前缀，默认 “闰” */
+  leapMarker?: string;
+  /** 月份/日期文案风格（当前 long/short 一致，预留扩展） */
+  style?: FormatLunarStyle;
+  /** 预留多语言支持，目前仅支持 'zh-CN' */
+  locale?: string;
+}
+
+/** formatLunarParts 返回的片段类型 */
+export type FormatLunarPartType =
+  | 'prefix'
+  | 'yearStem'
+  | 'yearBranch'
+  | 'yearNumber'
+  | 'yearZodiac'
+  | 'literal'
+  | 'month'
+  | 'day';
+
+export interface FormatLunarPart {
+  type: FormatLunarPartType;
+  value: string;
+}

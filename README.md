@@ -1,104 +1,160 @@
 # Lunar v2
 
-> 全新农历 / 公历互转库，面向现代 JavaScript / TypeScript 生态。
+> 高性能、公农历互转 + 标准农历文案输出库。覆盖 `1890-2100` 年，面向现代 TypeScript / JavaScript 生态。
 
-## 愿景
-- **准确互转**：覆盖 `1890-2100` 年区间，逐步扩展更广范围的公农历互转能力。
-- **高性能**：查表 + 算术的纯函数实现，适配 Node.js、浏览器与边缘计算环境。
-- **易扩展**：结构化 `LunarDate` 模型，保留生肖、天干地支、节气等挂载点。
-- **TDD 驱动**：通过 Vitest +黄金用例驱动开发，确保接口稳定及回归可控。
+## Features
+- ✅ **准确互转**：内置官方年表，`toLunar` / `toGregorian` 公农历互转支持闰月与边界日期。
+- 🚀 **跨平台纯函数**：无外部依赖，Node.js、浏览器、Edge Runtime、Web Worker 均可使用。
+- 🧱 **严格数据模型**：`LunarDate` 不可变、可序列化，便于缓存和持久化。
+- ✨ **标准文案**：`formatLunar`/`formatLunarParts` 直接输出“农历甲辰年正月初一”一类字符串，可选带生肖、天干地支。
+- 🧪 **TDD 保障**：Vitest + 黄金样本回归，确保 round-trip 一致性。
 
-更多目标与里程碑详见 [`docs/v2-plan.md`](./docs/v2-plan.md)。
+更多里程碑与规划参见 [`docs/v2-plan.md`](./docs/v2-plan.md)。
 
-## 当前状态
-- `v2` 分支正在重构数据模型与工具链，核心 API 以 TDD 方式逐步补齐。
-- `toLunar / toGregorian` 均已基于新版年表实现，可在 1890-2100 年范围内互转（含闰月）。
-- `createLunarDate` 等工具函数可用于业务模型或测试基石，round-trip 测试会持续扩充。
+---
 
-## 环境要求
-- 开发/构建：Node.js `>= 22`（建议搭配 pnpm 9 / npm 10 / Yarn 4）
-- 运行/集成：Node.js `>= 16.20` 或任一支持 ES2020+ 的现代浏览器
-
-> 发布包由 tsup 转译至 Node 16 目标，开发阶段依然推荐使用最新 LTS 以获取更快的构建 / 检查能力。
-
-## 快速开始
+## Installation
 ```bash
-# 安装依赖
-yarn install   # 或 pnpm install / npm install
-
-# 运行单元测试（TDD 推荐使用 --watch）
-yarn test
-
-# 监听模式，边写代码边跑测试
-yarn test:watch
-
-# 构建发布产物（tsup 生成 ESM + CJS + d.ts）
-yarn build
+npm install lunar
+# 或 yarn add lunar
+# 或 pnpm add lunar
 ```
 
-### 用例示例
-> `toLunar` / `toGregorian` 均返回结构化结果（含 metadata），示例如下：
+兼容 Node.js `>= 16.20` 以及任意 ES2020+ 环境。建议使用 Node.js 22+ 进行开发以获得更快的构建和类型检查体验。
 
+---
+
+## Quick Start
 ```ts
-import { toLunar, toGregorian, createLunarDate } from 'lunar';
+import { toLunar, toGregorian, formatLunar, createLunarDate } from 'lunar';
 
-const lunarBirth = createLunarDate({ year: 1991, month: 5, day: 18 });
+// 公历 -> 农历
+const { lunar, metadata } = toLunar(new Date('2024-02-10T00:00:00+08:00'));
+console.log(formatLunar(lunar)); // 农历甲辰年正月初一
+console.log(metadata.timezone);  // Asia/Shanghai（默认）
 
-const { date: solarBirthday } = toGregorian(lunarBirth);
-const { lunar } = toLunar(new Date('2014-10-24'));
+// 农历 -> 公历
+const festival = createLunarDate({ year: 2025, month: 5, day: 5 });
+const { date } = toGregorian(festival); // 返回 UTC Date 对象
 
-// 指定时区（默认 Asia/Shanghai），例如服务器以 UTC 存储时间
+// 自定义时区（例：服务器全部存 UTC）
 const timezone = 'UTC';
-const utcResult = toLunar(new Date('2014-10-24T00:00:00Z'), { timezone });
+const utcResult = toLunar(new Date('2024-02-09T16:00:00Z'), { timezone });
 const roundTrip = toGregorian(utcResult.lunar, { timezone });
 ```
 
-## 时区与本地化策略
-- 默认使用 `Asia/Shanghai` 解释 `Date` 输入/输出，确保与中国官方历法数据一致。
-- 通过 `ConversionOptions.timezone` 可指定任意 IANA 时区，库会以该时区的“本地日期”做互转；适合在 UTC 存储/展示中消除偏差。
-- 不涉及格式文本的本地化（如节气、生肖翻译），但 `docs/v2-plan.md` 中已为后续扩展预留挂点。
+---
 
-## 数据结构与输入约定
-- `LunarDate`：  
-  - `year`：范围 `1890-2100`；超出范围会抛出 `InvalidLunarDateError`。  
-  - `month`：1-12，1 表示正月；闰月仍使用其对应的数字（例如闰八月）。  
-  - `day`：1-30，根据具体月份大小校验。  
-  - `isLeapMonth`：布尔值，指示该月是否为闰月。  
-- `LunarDateInput`：既可以是 `{ year, month, day, isLeapMonth? }` 也可以是 `[year, month, day, isLeapMonth?]`。  
-- `GregorianDateInput`：支持 `Date`、UTC 毫秒数或 `{ year, month, day }`（月份同样为 1-12）。  
-- `ConversionOptions.timezone`：IANA 时区 ID（默认 `Asia/Shanghai`），用于在互转过程中解释本地日期。
+## API Reference
 
-## 项目结构
+### `toLunar(input, options?)`
+- **input** (`GregorianDateInput`): `Date`、UTC 时间戳（毫秒）或 `{ year, month, day }` 对象。月份为 1-12。
+- **options.timezone?** (`string`): IANA 时区 ID，决定如何理解输入的“本地日期”。默认 `Asia/Shanghai`。
+- **returns**:  
+  ```ts
+  interface ToLunarResult {
+    lunar: LunarDate;      // 归一化农历日期
+    source: Date;          // 归一化后的公历 Date（UTC）
+    metadata: { timezone: string };
+  }
+  ```
+
+### `toGregorian(input, options?)`
+- **input** (`LunarDateInput`): `LunarDate`、`{ year, month, day, isLeapMonth? }` 或 `[year, month, day, isLeapMonth?]`。
+- **options.timezone?**：与 `toLunar` 一致，用于将结果对齐到指定时区的零点。
+- **returns**:  
+  ```ts
+  interface ToGregorianResult {
+    date: Date;            // UTC Date，表示当地零点
+    source: LunarDate;     // 归一化农历输入
+    metadata: { timezone: string };
+  }
+  ```
+
+### `createLunarDate(input)`
+将用户输入归一化为不可变 `LunarDate`。会校验年份（`1890-2100`）、月份（1-12）和日期（1-30），非法值会抛出 `InvalidLunarDateError`。
+
+### `formatLunar(input, options?)`
+把农历日期渲染为标准字符串，默认输出 `农历甲辰年正月初一`。
+
+```ts
+formatLunar(lunar, {
+  zodiac: true,        // 农历甲辰年（龙）正月初一
+  prefix: 'Lunar ',    // 自定义前缀；传 false 则不输出“农历”
+  stemBranch: false,   // 禁用天干地支，用数字年份
+  leapMarker: '闰月'   // 农历闰月前缀
+});
 ```
-├── docs/              # 规划、算法说明
-├── src/
-│   ├── types.ts       # 数据结构定义 & 工厂函数
-│   ├── conversion.ts  # 公农历互转核心（待实现）
-│   ├── utils/         # 归一化与校验工具
-│   └── __tests__/     # Vitest 用例（TDD）
-├── tsup.config.ts     # 构建配置
-├── vitest.config.ts   # 测试配置
-└── eslint.config.mjs  # ESLint Flat config
+
+### `formatLunarParts(input, options?)`
+与 `formatLunar` 相同，但返回结构化片段，可用于自定义渲染或本地化：
+```ts
+[
+  { type: 'prefix', value: '农历' },
+  { type: 'yearStem', value: '甲' },
+  { type: 'yearBranch', value: '辰' },
+  { type: 'literal', value: '年' },
+  { type: 'month', value: '正月' },
+  { type: 'day', value: '初一' }
+]
 ```
 
-## 现代工具链
-- **TypeScript 5**：默认严格模式，全面暴露类型。
-- **Tsup**：生成 ESM / CJS / `.d.ts`，默认开启 SourceMap。
-- **Vitest**：单元测试 + 未来的黄金样本 / 属性测试。
-- **ESLint 9 + typescript-eslint 8（Flat Config）**：保持现代编码规范。
+---
 
-## 开发约定（TDD）
-1. 编写或更新测试用例（`src/__tests__`）。
-2. 运行 `yarn test:watch` 观察失败情况。
-3. 实现/重构功能直至测试通过。
-4. 回顾并更新文档、示例与数据表。
+## Inputs & Outputs
 
-CI 将在 `lint`、`test`、`build` 通过后才允许合并。
+| 名称 | 说明 | 取值/结构 |
+| --- | --- | --- |
+| `LunarDate` | 不可变农历对象 | `{ year: number; month: 1-12; day: 1-30; isLeapMonth: boolean }` |
+| `LunarDateInput` | 任意可被归一化的农历输入 | `LunarDate`、对象或元组 `[year, month, day, isLeapMonth?]` |
+| `GregorianDateInput` | 公历输入 | `Date`、UTC 毫秒数或 `{ year, month, day }`（1 基月） |
+| `ConversionOptions` | 时区配置 | `{ timezone?: string }`，默认 `Asia/Shanghai` |
+| `FormatLunarOptions` | 文案控制 | `prefix`, `stemBranch`, `zodiac`, `leapMarker`, `style`, `locale`（详见 `src/types.ts`） |
 
-## 贡献指南
-- 新增特性前请先查阅 [v2 规划](./docs/v2-plan.md)，或在 issue 中讨论需求与挑战。
-- Pull Request 需附带对应测试与文档。
-- 如涉及算法 / 数据更改，请在 PR 描述中提供来源与验证方式。
+**年份范围**：`1890-2100`。超出范围会抛出 `InvalidGregorianDateError` 或 `InvalidLunarDateError`。  
+**时区行为**：输入公历时先按指定时区转换为当地日期，再映射到农历；反向转换亦然，确保 round-trip 不受服务器/客户端本地时间影响。
 
-## 许可
-[MIT](./LICENSE) （与 v1 保持一致）
+---
+
+## Formatting Guide
+
+`FormatLunarOptions` 关键字段：
+- `prefix` (`boolean | string`): 控制“农历”前缀，默认 `true`。传字符串代表自定义前缀，传 `false` 关闭。
+- `stemBranch` (`boolean | 'year' | 'all'`): 是否输出天干地支。默认 `true`（仅年干支）。设为 `false` 时使用数字年份。
+- `zodiac` (`boolean`): 是否在年份后附加 `（龙）` 等生肖信息。
+- `leapMarker` (`string`): 闰月前缀，默认 `闰`（例如“闰八月”）。
+- `style` (`'long' | 'short'`): 月份/日期文案风格，当前 long/short 输出一致，未来可扩展为“正/初一”或“正1/初1”。
+- `locale` (`string`): 预留多语言支持，现阶段仅 `zh-CN`。
+
+---
+
+## Testing & Development
+```bash
+# 运行 Lint
+npm run lint
+
+# 运行测试
+npm run test
+
+# 构建产物（ESM + CJS + d.ts）
+npm run build
+```
+
+开发规范与 TDD 流程请参考 [`docs/v2-plan.md`](./docs/v2-plan.md) 和 `CONTRIBUTING` 约定（若存在）。
+
+---
+
+## FAQ
+**Q: 可以扩展到 1890 年以前或 2100 年以后吗？**  
+A: 当前数据表仅覆盖 `1890-2100`。扩展范围需要官方年表或权威资料，规划请见 v2 计划。
+
+**Q: 如何输出节气、传统节日？**  
+A: v2 暂未内建，可利用 `LunarDate` + 自定义数据源组合。`formatLunarParts` 预留了挂载点，后续版本会补充。
+
+**Q: 浏览器中如何使用？**  
+A: 包为纯 TypeScript 输出，默认提供 ESM/CJS。通过 bundler（Vite、Webpack、Rollup）或直接 `import` 即可。
+
+---
+
+## License
+[MIT](./LICENSE)
